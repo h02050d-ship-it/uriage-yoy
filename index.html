@@ -147,14 +147,20 @@ const YOY=(function(){
     for(const o of Object.values(m)){ o.cov = o.first && o.first<=R.prev[0] ? "ok" : (o.first && o.first<=R.prev[1] ? "part" : "none"); }
     return Object.values(m);
   }
+  /** 法人らしさの判定（個人名＝単発客はまとめて1行にする） */
+  const CO_RE=/株|㈱|㈲|有限|合同|会社|木材|モクザイ|建設|建装|工務|工業|産業|商店|商事|住宅|ハウス|ハウジング|工房|建築|設計|不動産|組合|市場|センター|製作所|事業|銘建|林業|製材|板金|塗装|内装|美装|リフォーム|工芸|建材|物産|興業|企業|技工|営業所|建営|サービス|デンキ|電気|電機|ケンソウ|ケンセツ|コウギョウ|コウムテン|ホーム|プランニング|店$|社$|組$|園$|堂$|屋$|舎$|館$/;
+  function isCompany(raw){ return CO_RE.test(String(raw||"")); }   // ※normで（株）等を落とす前の生の名前で判定する
+  const INDIV="個人客（単発）";
   /** 付売・HP直販: 納品書DB rows {date,customer,method,kingaku} */
   function aggNouhin(rows,R){
     const m={};
     for(const r of rows||[]){ const meth=String(r.method||"").trim(); if(meth==="市売") continue;
       const d=parseD(r.date); if(!d) continue;
       const ch = meth==="ネット" ? "HP直販" : (meth||"付売");
-      const k=norm(r.customer)||"(取引先不明)"; const key=ch+"|"+k;
-      const o=m[key]=m[key]||{name:k,ch,p:0,c:0,first:null,last:null,cov:"ok"};
+      let k=norm(r.customer)||"(取引先不明)"; const indiv = ch!=="付売" && !isCompany(r.customer); if(indiv) k=INDIV;   // 付売は法人取引先のみ
+      const key=ch+"|"+k;
+      const o=m[key]=m[key]||{name:k,ch,p:0,c:0,first:null,last:null,cov:"ok",indiv,names:{}};
+      if(indiv){ const n=norm(r.customer); if(n) o.names[n]=(o.names[n]||0)+num(r.kingaku); }
       if(!o.first||d<o.first) o.first=d; if(!o.last||d>o.last) o.last=d;
       if(inR(d,R.cur)) o.c+=num(r.kingaku); else if(inR(d,R.prev)) o.p+=num(r.kingaku);
     }
@@ -176,12 +182,13 @@ const YOY=(function(){
     const R=ranges(fy,endIdx);
     const rows=[].concat(aggIchiba(data.ledger,R), aggNouhin(data.nouhin,R), aggEC(data.ec,fy,endIdx));
     rows.forEach(o=>{ o.d=o.c-o.p; o.rate = o.p? o.c/o.p : null; });
-    const ch={}; for(const o of rows){ const c=ch[o.ch]=ch[o.ch]||{ch:o.ch,p:0,c:0,cp:0,cc:0,noCov:0,n:0,nP:0,nC:0,lost:0,neu:0}; c.p+=o.p; c.c+=o.c; c.n++; if(o.p) c.nP++; if(o.c) c.nC++; if(o.p&&!o.c) c.lost++; if(!o.p&&o.c) c.neu++;
+    const ch={}; for(const o of rows){ const c=ch[o.ch]=ch[o.ch]||{ch:o.ch,p:0,c:0,cp:0,cc:0,noCov:0,n:0,nP:0,nC:0,lost:0,neu:0}; c.p+=o.p; c.c+=o.c;
+      if(!o.indiv){ c.n++; if(o.p) c.nP++; if(o.c) c.nC++; if(o.p&&!o.c) c.lost++; if(!o.p&&o.c) c.neu++; }   // 単発の個人客は取引先数・消えた・新規に数えない
       if(o.cov==="ok"){ c.cp+=o.p; c.cc+=o.c; } else c.noCov++; }   // cp/cc=前期データが揃っている先だけの合計（比較可能分）
     const tot={p:0,c:0,cp:0,cc:0,noCov:0}; Object.values(ch).forEach(c=>{tot.p+=c.p; tot.c+=c.c; tot.cp+=c.cp; tot.cc+=c.cc; tot.noCov+=c.noCov;});
     return {R,rows,ch:Object.values(ch),tot};
   }
-  return {fyOf,fyIdx,ranges,build,norm};
+  return {fyOf,fyIdx,ranges,build,norm,isCompany};
 })();
 if(typeof module!=="undefined") module.exports=YOY;
 </script>
@@ -319,7 +326,7 @@ function renderTable(){
   let rows=RES.rows.filter(o=>{
     if(CH!=="all"&&o.ch!==CH) return false;
     if(q&&o.name.indexOf(q)<0) return false;
-    if(FILTER==="down") return o.d<0; if(FILTER==="up") return o.d>0; if(FILTER==="lost") return o.p&&!o.c; if(FILTER==="new") return !o.p&&o.c;
+    if(FILTER==="down") return o.d<0; if(FILTER==="up") return o.d>0; if(FILTER==="lost") return !o.indiv&&o.p&&!o.c; if(FILTER==="new") return !o.indiv&&!o.p&&o.c;
     return true;
   });
   rows.sort((a,b)=>{ const k=SORT.k; let va=a[k],vb=b[k]; if(k==="name"||k==="ch"){ va=String(va);vb=String(vb); return SORT.asc?va.localeCompare(vb,"ja"):vb.localeCompare(va,"ja"); } if(k==="last"){ va=va?va.getTime():0; vb=vb?vb.getTime():0; } if(va==null) va=-Infinity; if(vb==null) vb=-Infinity; return SORT.asc?va-vb:vb-va; });
@@ -330,8 +337,9 @@ function renderTable(){
   for(const o of rows){ sp+=o.p; sc+=o.c;
     const w=Math.round(Math.abs(o.d)/maxAbs*90); const bar="<span class='bar' style='width:"+w+"px;background:"+(o.d<0?"#fca5a5":"#86efac")+"'></span>";
     const cov=o.cov==="ok"?"":(o.cov==="part"?"<span class='tag t-warn'>前期一部のみ</span>":"<span class='tag t-red'>前期データなし</span>");
-    const st=(o.p&&!o.c)?" <span class='tag t-red'>消えた</span>":((!o.p&&o.c)?" <span class='tag t-green'>新規</span>":"");
-    h+="<tr><td>"+esc(o.name)+st+"</td><td>"+tag(o.ch)+"</td><td class='r'>"+man(o.p,1)+"</td><td class='r'>"+man(o.c,1)+"</td><td class='r "+cls(o.d)+"' title='"+man1(o.d)+"万'>"+man(o.d)+"</td><td>"+bar+"</td><td class='r'>"+pct(o.rate)+"</td><td class='r'>"+(dT?Math.round(o.d/dT*100)+"%":"-")+"</td><td class='r'>"+ymd(o.last)+"</td><td>"+cov+"</td></tr>";
+    const st=o.indiv?" <span class='tag' style='background:#eef0f3;color:#6b7280'>個人名をまとめて表示</span>":((o.p&&!o.c)?" <span class='tag t-red'>消えた</span>":((!o.p&&o.c)?" <span class='tag t-green'>新規</span>":""));
+    const ttl=o.indiv?" title='"+esc(Object.entries(o.names).sort((a,b)=>b[1]-a[1]).slice(0,30).map(([n,v])=>n+" "+man1(v)+"万").join("\n"))+"'":"";
+    h+="<tr"+ttl+"><td>"+esc(o.name)+st+"</td><td>"+tag(o.ch)+"</td><td class='r'>"+man(o.p,1)+"</td><td class='r'>"+man(o.c,1)+"</td><td class='r "+cls(o.d)+"' title='"+man1(o.d)+"万'>"+man(o.d)+"</td><td>"+bar+"</td><td class='r'>"+pct(o.rate)+"</td><td class='r'>"+(dT?Math.round(o.d/dT*100)+"%":"-")+"</td><td class='r'>"+ymd(o.last)+"</td><td>"+cov+"</td></tr>";
   }
   h+="<tr class='tot'><td colspan='2'>表示分の合計（"+rows.length+"件）</td><td class='r'>"+man(sp)+"</td><td class='r'>"+man(sc)+"</td><td class='r "+cls(sc-sp)+"'>"+man(sc-sp)+"</td><td></td><td class='r'>"+pct(sp?sc/sp:null)+"</td><td class='r'>"+(dT?Math.round((sc-sp)/dT*100)+"%":"-")+"</td><td colspan='2'></td></tr>";
   $("tbl").innerHTML=h;
@@ -344,7 +352,7 @@ function renderNotes(){
   const yo=RES.rows.find(o=>o.name==="ヤフーショッピング");
   const lines=[
     "<b>市売</b>は市場別精算台帳（精算書の税抜売上）です。精算書の取り込みは市場によって開始時期が違うため、前期の途中から記録が始まっている市場は「前期一部のみ」「前期データなし」と表示しています"+(noCov.length?"（該当: "+esc(noCov.join("・"))+"）":"")+"。その市場の前年比は実態より良く見えます。",
-    "<b>付売・HP直販</b>は納品書DB（出荷日ベース・税抜）です。会計の売上（入金時計上）とは月がずれます。",
+    "<b>付売・HP直販</b>は納品書DB（出荷日ベース・税抜）です。会計の売上（入金時計上）とは月がずれます。<b>個人名の客は単発なので「個人客（単発）」に1行でまとめ</b>、取引先数・消えた・新規には数えていません（行にマウスを乗せると内訳が出ます）。会社名の判定は名前の語（木材・建設・（株）など）で行っています。",
     "<b>EC</b>は楽天・ヤフーの売上集計表の月合計（受注ベース・クーポン調整後）です。"+(yo&&yo.p===0?"ヤフーの前期はまだ集計表に入っていません。":""),
     "<b>会計の売上高と合計は一致しません</b>。会計は入金ベースで、税理士の月次計上と戻入が入ります。全社の前年比は決算書（貸借対照表・損益計算書）を正としてください。このツールは「どの取引先で増減したか」を見るためのものです。",
     "終了月は右上で変えられます。当月は締まっていないので、既定は前月までです。"
