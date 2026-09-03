@@ -176,8 +176,9 @@ const YOY=(function(){
     const R=ranges(fy,endIdx);
     const rows=[].concat(aggIchiba(data.ledger,R), aggNouhin(data.nouhin,R), aggEC(data.ec,fy,endIdx));
     rows.forEach(o=>{ o.d=o.c-o.p; o.rate = o.p? o.c/o.p : null; });
-    const ch={}; for(const o of rows){ const c=ch[o.ch]=ch[o.ch]||{ch:o.ch,p:0,c:0,n:0,nP:0,nC:0,lost:0,neu:0}; c.p+=o.p; c.c+=o.c; c.n++; if(o.p) c.nP++; if(o.c) c.nC++; if(o.p&&!o.c) c.lost++; if(!o.p&&o.c) c.neu++; }
-    const tot={p:0,c:0}; Object.values(ch).forEach(c=>{tot.p+=c.p; tot.c+=c.c;});
+    const ch={}; for(const o of rows){ const c=ch[o.ch]=ch[o.ch]||{ch:o.ch,p:0,c:0,cp:0,cc:0,noCov:0,n:0,nP:0,nC:0,lost:0,neu:0}; c.p+=o.p; c.c+=o.c; c.n++; if(o.p) c.nP++; if(o.c) c.nC++; if(o.p&&!o.c) c.lost++; if(!o.p&&o.c) c.neu++;
+      if(o.cov==="ok"){ c.cp+=o.p; c.cc+=o.c; } else c.noCov++; }   // cp/cc=前期データが揃っている先だけの合計（比較可能分）
+    const tot={p:0,c:0,cp:0,cc:0,noCov:0}; Object.values(ch).forEach(c=>{tot.p+=c.p; tot.c+=c.c; tot.cp+=c.cp; tot.cc+=c.cc; tot.noCov+=c.noCov;});
     return {R,rows,ch:Object.values(ch),tot};
   }
   return {fyOf,fyIdx,ranges,build,norm};
@@ -287,17 +288,22 @@ function render(){
 }
 function cls(n){ return n<0?"neg":(n>0?"pos":""); }
 function renderKpis(){
-  const T=RES.tot; const d=T.c-T.p; const chs={}; RES.ch.forEach(c=>chs[c.ch]=c);
-  const k=[{l:"合計（3系統の合算）",v:man(T.c)+"万",s:"前期 "+man(T.p)+"万 → 差 <b class='"+cls(d)+"'>"+man(d)+"万</b>（"+pct(T.p?T.c/T.p:null)+"）"}];
-  for(const name of ["市売","付売","EC","HP直販"]){ const c=chs[name]; if(!c) continue; const dd=c.c-c.p; k.push({l:name,v:man(c.c)+"万",s:"前期 "+man(c.p)+"万 → 差 <b class='"+cls(dd)+"'>"+man(dd)+"万</b>（"+pct(c.p?c.c/c.p:null)+"）"}); }
+  const T=RES.tot; const chs={}; RES.ch.forEach(c=>chs[c.ch]=c);
+  const line=(p,c,noCov)=>{ const d=c-p; return "前期 "+man(p)+"万 → 差 <b class='"+cls(d)+"'>"+man(d)+"万</b>（"+pct(p?c/p:null)+"）"+(noCov?"<br><span class='tag t-warn'>前期データのない"+noCov+"先を除く</span>":""); };
+  const k=[{l:"合計（比較可能な先のみ）",v:man(T.cc)+"万",s:line(T.cp,T.cc,T.noCov)}];
+  for(const name of ["市売","付売","EC","HP直販"]){ const c=chs[name]; if(!c) continue; k.push({l:name+(c.noCov?"（比較可能分）":""),v:man(c.cc)+"万",s:line(c.cp,c.cc,c.noCov)}); }
   $("kpis").innerHTML=k.map(x=>"<div class='kpi'><div class='l'>"+esc(x.l)+"</div><div class='v'>"+x.v+"</div><div class='s'>"+x.s+"</div></div>").join("");
 }
 function renderCh(){
   const T=RES.tot; const dT=T.c-T.p;
   const order=["市売","付売","EC","HP直販"]; const rows=RES.ch.slice().sort((a,b)=>order.indexOf(a.ch)-order.indexOf(b.ch));
+  const dC=T.cc-T.cp;
   let h="<tr><th>チャネル</th><th class='r'>前期</th><th class='r'>今期</th><th class='r'>差</th><th class='r'>前年比</th><th class='r'>全体の差への寄与</th><th class='r'>取引先数（前期→今期）</th><th class='r'>消えた</th><th class='r'>新規</th></tr>";
-  for(const c of rows){ const d=c.c-c.p; h+="<tr><td>"+tag(c.ch)+"</td><td class='r'>"+man(c.p)+"</td><td class='r'>"+man(c.c)+"</td><td class='r "+cls(d)+"'>"+man(d)+"</td><td class='r'>"+pct(c.p?c.c/c.p:null)+"</td><td class='r'>"+(dT?Math.round(d/dT*100)+"%":"-")+"</td><td class='r'>"+c.nP+" → "+c.nC+"</td><td class='r'>"+c.lost+"</td><td class='r'>"+c.neu+"</td></tr>"; }
-  h+="<tr class='tot'><td>合計</td><td class='r'>"+man(T.p)+"</td><td class='r'>"+man(T.c)+"</td><td class='r "+cls(dT)+"'>"+man(dT)+"</td><td class='r'>"+pct(T.p?T.c/T.p:null)+"</td><td class='r'>100%</td><td colspan='3'></td></tr>";
+  for(const c of rows){ const d=c.c-c.p; const dd=c.cc-c.cp;
+    h+="<tr><td>"+tag(c.ch)+(c.noCov?" <span class='tag t-warn'>前期データなし "+c.noCov+"先を含む</span>":"")+"</td><td class='r'>"+man(c.p)+"</td><td class='r'>"+man(c.c)+"</td><td class='r "+cls(d)+"'>"+man(d)+"</td><td class='r'>"+pct(c.p?c.c/c.p:null)+"</td><td class='r'>"+(c.noCov?"-":(dC?Math.round(dd/dC*100)+"%":"-"))+"</td><td class='r'>"+c.nP+" → "+c.nC+"</td><td class='r'>"+c.lost+"</td><td class='r'>"+c.neu+"</td></tr>";
+    if(c.noCov) h+="<tr><td style='padding-left:28px;color:var(--sub)'>└ うち前期データが揃っている先のみ</td><td class='r'>"+man(c.cp)+"</td><td class='r'>"+man(c.cc)+"</td><td class='r "+cls(dd)+"'>"+man(dd)+"</td><td class='r'>"+pct(c.cp?c.cc/c.cp:null)+"</td><td class='r'>"+(dC?Math.round(dd/dC*100)+"%":"-")+"</td><td colspan='3'></td></tr>"; }
+  h+="<tr class='tot'><td>合計（比較可能な先のみ）</td><td class='r'>"+man(T.cp)+"</td><td class='r'>"+man(T.cc)+"</td><td class='r "+cls(dC)+"'>"+man(dC)+"</td><td class='r'>"+pct(T.cp?T.cc/T.cp:null)+"</td><td class='r'>100%</td><td colspan='3'></td></tr>";
+  h+="<tr class='tot'><td>合計（全部）</td><td class='r'>"+man(T.p)+"</td><td class='r'>"+man(T.c)+"</td><td class='r "+cls(dT)+"'>"+man(dT)+"</td><td class='r'>"+pct(T.p?T.c/T.p:null)+"</td><td class='r'>-</td><td colspan='3'></td></tr>";
   $("chTable").innerHTML=h;
 }
 function tag(ch){ const m={"市売":"t-ichi","付売":"t-tsuke","EC":"t-ec","HP直販":"t-hp"}; return "<span class='tag "+(m[ch]||"")+"'>"+esc(ch)+"</span>"; }
