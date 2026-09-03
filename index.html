@@ -52,7 +52,7 @@ tr:hover td{background:#f8fafc}
 .chip.on{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:700}
 .tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;line-height:1.5;vertical-align:middle}
 .t-ichi{background:#dbeafe;color:#1e40af}.t-tsuke{background:#fce7f3;color:#9d174d}.t-ec{background:#ede9fe;color:#5b21b6}.t-hp{background:#ecfccb;color:#3f6212}
-.t-gray{background:#eef0f3;color:#6b7280}.t-warn{background:var(--amberbg);color:var(--amber)}.t-red{background:var(--redbg);color:var(--red)}.t-green{background:var(--greenbg);color:var(--green)}
+.u{font-size:10px;color:var(--sub);margin-left:1px;font-weight:400}.t-gray{background:#eef0f3;color:#6b7280}.t-warn{background:var(--amberbg);color:var(--amber)}.t-red{background:var(--redbg);color:var(--red)}.t-green{background:var(--greenbg);color:var(--green)}
 .bar{display:inline-block;height:10px;vertical-align:middle;border-radius:2px}
 .note{color:var(--sub);font-size:12px;line-height:1.7}
 .note b{color:var(--ink)}
@@ -220,6 +220,7 @@ const $=id=>document.getElementById(id);
 function esc(s){ return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
 function man(n,dash){ const v=Math.round((n||0)/10000); if(!v&&dash) return "-"; return (v<0?"▲":"")+Math.abs(v).toLocaleString("ja-JP"); }
 function man1(n){ const v=Math.round((n||0)/1000)/10; return (v<0?"▲":"")+Math.abs(v).toLocaleString("ja-JP",{minimumFractionDigits:1,maximumFractionDigits:1}); }
+function mu(n,dash){ const t=man(n,dash); return t==="-"?t:t+"<span class='u'>万</span>"; }   // 単位つき（表のセル用）
 function pct(r){ return r==null? "-" : Math.round(r*100)+"%"; }
 function ymd(d){ return d? (d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()) : "-"; }
 let toastT=null; function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2600); }
@@ -317,10 +318,10 @@ function renderCh(){
   const dC=T.cc-T.cp;
   let h="<tr><th>チャネル</th><th class='r'>前期</th><th class='r'>今期</th><th class='r'>差</th><th class='r'>前年比</th><th class='r'>全体の差への寄与</th><th class='r'>取引先数（前期→今期）</th><th class='r'>消えた</th><th class='r'>新規</th></tr>";
   for(const c of rows){ const d=c.c-c.p; const dd=c.cc-c.cp;
-    h+="<tr><td>"+tag(c.ch)+(c.noCov?" <span class='tag t-warn'>前期データなし "+c.noCov+"先を含む</span>":"")+"</td><td class='r'>"+man(c.p)+"</td><td class='r'>"+man(c.c)+"</td><td class='r "+cls(d)+"'>"+man(d)+"</td><td class='r'>"+pct(c.p?c.c/c.p:null)+"</td><td class='r'>"+(c.noCov?"-":(dC?Math.round(dd/dC*100)+"%":"-"))+"</td><td class='r'>"+c.nP+" → "+c.nC+"</td><td class='r'>"+c.lost+"</td><td class='r'>"+c.neu+"</td></tr>";
-    if(c.noCov) h+="<tr><td style='padding-left:28px;color:var(--sub)'>└ うち前期データが揃っている先のみ</td><td class='r'>"+man(c.cp)+"</td><td class='r'>"+man(c.cc)+"</td><td class='r "+cls(dd)+"'>"+man(dd)+"</td><td class='r'>"+pct(c.cp?c.cc/c.cp:null)+"</td><td class='r'>"+(dC?Math.round(dd/dC*100)+"%":"-")+"</td><td colspan='3'></td></tr>"; }
-  h+="<tr class='tot'><td>合計（比較可能な先のみ）</td><td class='r'>"+man(T.cp)+"</td><td class='r'>"+man(T.cc)+"</td><td class='r "+cls(dC)+"'>"+man(dC)+"</td><td class='r'>"+pct(T.cp?T.cc/T.cp:null)+"</td><td class='r'>100%</td><td colspan='3'></td></tr>";
-  h+="<tr class='tot'><td>合計（全部）</td><td class='r'>"+man(T.p)+"</td><td class='r'>"+man(T.c)+"</td><td class='r "+cls(dT)+"'>"+man(dT)+"</td><td class='r'>"+pct(T.p?T.c/T.p:null)+"</td><td class='r'>-</td><td colspan='3'></td></tr>";
+    h+="<tr><td>"+tag(c.ch)+(c.noCov?" <span class='tag t-warn'>前期データなし "+c.noCov+"先を含む</span>":"")+"</td><td class='r'>"+mu(c.p)+"</td><td class='r'>"+mu(c.c)+"</td><td class='r "+cls(d)+"'>"+mu(d)+"</td><td class='r'>"+pct(c.p?c.c/c.p:null)+"</td><td class='r'>"+(c.noCov?"-":(dC?Math.round(dd/dC*100)+"%":"-"))+"</td><td class='r'>"+c.nP+" → "+c.nC+"</td><td class='r'>"+c.lost+"</td><td class='r'>"+c.neu+"</td></tr>";
+    if(c.noCov) h+="<tr><td style='padding-left:28px;color:var(--sub)'>└ うち前期データが揃っている先のみ</td><td class='r'>"+mu(c.cp)+"</td><td class='r'>"+mu(c.cc)+"</td><td class='r "+cls(dd)+"'>"+mu(dd)+"</td><td class='r'>"+pct(c.cp?c.cc/c.cp:null)+"</td><td class='r'>"+(dC?Math.round(dd/dC*100)+"%":"-")+"</td><td colspan='3'></td></tr>"; }
+  h+="<tr class='tot'><td>合計（比較可能な先のみ）</td><td class='r'>"+mu(T.cp)+"</td><td class='r'>"+mu(T.cc)+"</td><td class='r "+cls(dC)+"'>"+mu(dC)+"</td><td class='r'>"+pct(T.cp?T.cc/T.cp:null)+"</td><td class='r'>100%</td><td colspan='3'></td></tr>";
+  h+="<tr class='tot'><td>合計（全部）</td><td class='r'>"+mu(T.p)+"</td><td class='r'>"+mu(T.c)+"</td><td class='r "+cls(dT)+"'>"+mu(dT)+"</td><td class='r'>"+pct(T.p?T.c/T.p:null)+"</td><td class='r'>-</td><td colspan='3'></td></tr>";
   $("chTable").innerHTML=h;
 }
 function tag(ch){ const m={"市売":"t-ichi","付売":"t-tsuke","EC":"t-ec","HP直販":"t-hp"}; return "<span class='tag "+(m[ch]||"")+"'>"+esc(ch)+"</span>"; }
@@ -351,9 +352,9 @@ function renderTable(){
     if(o.memo) st+=" <span class='tag t-"+(o.memo.kind||"gray")+"'>"+esc(o.memo.st)+"</span>";
     const memo=o.memo?"<span style='color:var(--sub);font-size:12px'>"+esc(o.memo.note)+"</span>":"";
     const ttl=o.indiv?" title='"+esc(Object.entries(o.names).sort((a,b)=>b[1]-a[1]).slice(0,30).map(([n,v])=>n+" "+man1(v)+"万").join("\n"))+"'":"";
-    h+="<tr"+ttl+"><td>"+esc(o.name)+st+"</td><td>"+tag(o.ch)+"</td><td class='r'>"+man(o.p,1)+"</td><td class='r'>"+man(o.c,1)+"</td><td class='r "+cls(o.d)+"' title='"+man1(o.d)+"万'>"+man(o.d)+"</td><td>"+bar+"</td><td class='r'>"+pct(o.rate)+"</td><td class='r'>"+(dT?Math.round(o.d/dT*100)+"%":"-")+"</td><td class='r'>"+ymd(o.last)+"</td><td>"+cov+"</td><td style='max-width:320px;white-space:normal'>"+memo+"</td></tr>";
+    h+="<tr"+ttl+"><td>"+esc(o.name)+st+"</td><td>"+tag(o.ch)+"</td><td class='r'>"+mu(o.p,1)+"</td><td class='r'>"+mu(o.c,1)+"</td><td class='r "+cls(o.d)+"' title='"+man1(o.d)+"万'>"+mu(o.d)+"</td><td>"+bar+"</td><td class='r'>"+pct(o.rate)+"</td><td class='r'>"+(dT?Math.round(o.d/dT*100)+"%":"-")+"</td><td class='r'>"+ymd(o.last)+"</td><td>"+cov+"</td><td style='max-width:320px;white-space:normal'>"+memo+"</td></tr>";
   }
-  h+="<tr class='tot'><td colspan='2'>表示分の合計（"+rows.length+"件）</td><td class='r'>"+man(sp)+"</td><td class='r'>"+man(sc)+"</td><td class='r "+cls(sc-sp)+"'>"+man(sc-sp)+"</td><td></td><td class='r'>"+pct(sp?sc/sp:null)+"</td><td class='r'>"+(dT?Math.round((sc-sp)/dT*100)+"%":"-")+"</td><td colspan='3'></td></tr>";
+  h+="<tr class='tot'><td colspan='2'>表示分の合計（"+rows.length+"件）</td><td class='r'>"+mu(sp)+"</td><td class='r'>"+mu(sc)+"</td><td class='r "+cls(sc-sp)+"'>"+mu(sc-sp)+"</td><td></td><td class='r'>"+pct(sp?sc/sp:null)+"</td><td class='r'>"+(dT?Math.round((sc-sp)/dT*100)+"%":"-")+"</td><td colspan='3'></td></tr>";
   $("tbl").innerHTML=h;
   $("tbl").querySelectorAll("th[data-k]").forEach(t=>t.onclick=()=>{ const k=t.dataset.k; if(SORT.k===k) SORT.asc=!SORT.asc; else { SORT.k=k; SORT.asc=(k==="d"||k==="name"||k==="ch"); } renderTable(); });
   $("listSub").textContent="単位：万円。差の小さい順（減少が大きい先が上）。列名クリックで並べ替え。";
