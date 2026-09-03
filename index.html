@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>取引先別 売上前年比 | 林材木店</title>
+<link rel="preconnect" href="https://script.google.com" crossorigin>
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+<link rel="dns-prefetch" href="https://script.google.com">
+<link rel="dns-prefetch" href="https://script.googleusercontent.com">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231d4ed8'/><text x='51' y='46.5' font-size='68' text-anchor='middle' dominant-baseline='central' fill='white' font-family='Meiryo,sans-serif' font-weight='700'>比</text></svg>">
+<link rel="apple-touch-icon" href="favicon.svg">
+<meta name="apple-mobile-web-app-title" content="売上前年比">
+<meta name="theme-color" content="#1d4ed8">
+<style>
+:root{--ink:#1f2937;--sub:#6b7280;--line:#e5e7eb;--bg:#f5f7fa;--card:#fff;--blue:#1d4ed8;--blue2:#1e40af;--red:#b91c1c;--redbg:#fee2e2;--green:#047857;--greenbg:#d1fae5;--amber:#b45309;--amberbg:#fef3c7}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Meiryo UI","Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;font-size:14px;line-height:1.5}
+a{color:var(--blue)}
+button{font:inherit;cursor:pointer}
+input,select{font:inherit;color:var(--ink)}
+.wrap{max-width:1400px;margin:0 auto;padding:12px 16px 60px}
+.hdr{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 0 10px;border-bottom:2px solid var(--blue)}
+.logo{width:34px;height:34px;border-radius:8px;background:var(--blue);color:#fff;font-weight:700;font-size:20px;display:flex;align-items:center;justify-content:center;flex:none}
+.hdr h1{font-size:19px;margin:0;font-weight:700}
+.hdr .meta{color:var(--sub);font-size:12.5px}
+.hdr .sp{flex:1}
+.btn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 11px;font-size:13px;color:var(--ink)}
+.btn:hover{background:#f3f4f6}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.btn.pri:hover{background:var(--blue2)}
+select.ctl{border:1px solid var(--line);border-radius:6px;padding:5px 8px;background:#fff;font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:12px 0}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.kpi .l{font-size:12px;color:var(--sub)}
+.kpi .v{font-size:22px;font-weight:700;margin-top:2px;letter-spacing:-.3px}
+.kpi .s{font-size:11.5px;color:var(--sub)}
+.neg{color:var(--red)}.pos{color:var(--green)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.card h2{font-size:15px;margin:0 0 8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card h2 .sub{font-weight:400;color:var(--sub);font-size:12px}
+.card h2 .sp{flex:1}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;white-space:nowrap}
+th{background:#f3f4f6;font-weight:600;color:#374151;font-size:12px;position:sticky;top:0;cursor:pointer;user-select:none}
+th.r,td.r{text-align:right;font-variant-numeric:tabular-nums}
+tr.tot td{font-weight:700;background:#f9fafb;border-top:2px solid #cbd5e1}
+tr:hover td{background:#f8fafc}
+.tw{overflow:auto;max-height:70vh}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:4px 12px;font-size:12.5px}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:700}
+.tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;line-height:1.5;vertical-align:middle}
+.t-ichi{background:#dbeafe;color:#1e40af}.t-tsuke{background:#fce7f3;color:#9d174d}.t-ec{background:#ede9fe;color:#5b21b6}.t-hp{background:#ecfccb;color:#3f6212}
+.t-warn{background:var(--amberbg);color:var(--amber)}.t-red{background:var(--redbg);color:var(--red)}.t-green{background:var(--greenbg);color:var(--green)}
+.bar{display:inline-block;height:10px;vertical-align:middle;border-radius:2px}
+.note{color:var(--sub);font-size:12px;line-height:1.7}
+.note b{color:var(--ink)}
+input.q{border:1px solid var(--line);border-radius:6px;padding:5px 9px;font-size:13px;width:200px}
+#gate{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:100}
+#gate.on{display:flex}
+.gbox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:26px 28px;width:360px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+.gbox h2{margin:0 0 4px;font-size:18px;display:flex;align-items:center;gap:10px}
+.gbox p{color:var(--sub);font-size:12.5px;margin:0 0 14px}
+.gbox input{width:100%;border:1px solid var(--line);border-radius:6px;padding:9px 10px;margin-bottom:9px;font-size:14px}
+.gbox .err{color:var(--red);font-size:12.5px;min-height:18px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:200}
+#toast.show{opacity:1;transform:translateX(-50%)}
+.foot{color:var(--sub);font-size:11.5px;margin-top:20px}
+@media (max-width:760px){.wrap{padding:8px 8px 60px}.hdr h1{font-size:16px}.kpi .v{font-size:18px}}
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="gbox">
+    <h2><span class="logo">比</span>取引先別 売上前年比</h2>
+    <p>林材木店 社内ツール。他の社内ツールでログイン済みなら自動で入ります。</p>
+    <input id="gMail" type="text" placeholder="メールアドレス" autocomplete="username">
+    <input id="gPass" type="password" placeholder="パスワード" autocomplete="current-password">
+    <div class="err" id="gErr"></div>
+    <button class="btn pri" id="gBtn" style="width:100%;padding:9px">ログイン</button>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <div class="hdr">
+    <div class="logo">比</div>
+    <div>
+      <h1>取引先別 売上前年比 <span class="meta" id="period"></span></h1>
+      <div class="meta" id="meta">読み込み中…</div>
+    </div>
+    <div class="sp"></div>
+    <label class="meta">集計の終了月 <select class="ctl" id="endSel"></select></label>
+    <button class="btn" id="reloadBtn">再読込</button>
+    <button class="btn" id="logoutBtn">ログアウト</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card">
+    <h2>チャネル別 <span class="sub">今期と前期の同じ期間（4月〜終了月）を比較。単位：万円（税抜）</span></h2>
+    <div class="tw"><table id="chTable"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>取引先別 <span class="sub" id="listSub"></span><span class="sp"></span><input class="q" id="q" placeholder="取引先で絞り込み"></h2>
+    <div class="chips" id="chips"></div>
+    <div class="tw"><table id="tbl"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>この数字の読み方</h2>
+    <div class="note" id="notes"></div>
+  </div>
+  <div class="foot">出典：市売＝市場別精算台帳（経営日報DB・税抜売上）／付売・HP直販＝納品書DB（出荷ベース・税抜）／EC＝楽天・ヤフー売上集計表（order-desk経由）。会計（マネフォ）の売上高とは計上基準が違うため合計は一致しません。</div>
+</div>
+<div id="toast"></div>
+
+<script id="calc">
+/* ===== 集計エンジン（DOM非依存・nodeでテスト可能） ===== */
+const YOY=(function(){
+  function fyOf(d){ return d.getMonth()>=3? d.getFullYear() : d.getFullYear()-1; }           // 会計年度（4月開始）
+  function fyIdx(m){ return m>=4? m-4 : m+8; }                                              // 4月=0 … 3月=11
+  function norm(s){ return String(s||"").replace(/株式会社|（株）|\(株\)|有限会社|（有）|\(有\)|[\s　]/g,""); }
+  function parseD(v){ if(!v) return null; const t=new Date(v); return isNaN(t)?null:t; }
+  /** 期間: fy=今期の会計年度, endIdx=終了月の索引(0=4月…11=3月) */
+  function ranges(fy,endIdx){
+    const endM=endIdx+4>12? endIdx-8 : endIdx+4;            // 暦月
+    const endY=endIdx>=9? fy+1 : fy;
+    const cur=[new Date(fy,3,1), new Date(endY,endM,0,23,59,59)];        // 月末
+    const prev=[new Date(fy-1,3,1), new Date(endY-1,endM,0,23,59,59)];
+    return {cur,prev,endM};
+  }
+  function inR(d,r){ return d && d>=r[0] && d<=r[1]; }
+  function num(v){ return Number(String(v==null?"":v).replace(/[^0-9.\-]/g,""))||0; }
+
+  /** 市売: 精算台帳 rows {market,date,kind,sales,net} */
+  function aggIchiba(ledger,R){
+    const m={};
+    for(const x of ledger||[]){ const d=parseD(x.date); if(!d) continue;
+      const k=String(x.market||"").trim()||"(市場不明)";
+      const o=m[k]=m[k]||{name:k,ch:"市売",p:0,c:0,first:null,last:null};
+      if(!o.first||d<o.first) o.first=d; if(!o.last||d>o.last) o.last=d;
+      if(inR(d,R.cur)) o.c+=num(x.sales); else if(inR(d,R.prev)) o.p+=num(x.sales);
+    }
+    // 前期カバレッジ: 台帳の最古日が前期開始より後なら「前期データ不足」
+    for(const o of Object.values(m)){ o.cov = o.first && o.first<=R.prev[0] ? "ok" : (o.first && o.first<=R.prev[1] ? "part" : "none"); }
+    return Object.values(m);
+  }
+  /** 付売・HP直販: 納品書DB rows {date,customer,method,kingaku} */
+  function aggNouhin(rows,R){
+    const m={};
+    for(const r of rows||[]){ const meth=String(r.method||"").trim(); if(meth==="市売") continue;
+      const d=parseD(r.date); if(!d) continue;
+      const ch = meth==="ネット" ? "HP直販" : (meth||"付売");
+      const k=norm(r.customer)||"(取引先不明)"; const key=ch+"|"+k;
+      const o=m[key]=m[key]||{name:k,ch,p:0,c:0,first:null,last:null,cov:"ok"};
+      if(!o.first||d<o.first) o.first=d; if(!o.last||d>o.last) o.last=d;
+      if(inR(d,R.cur)) o.c+=num(r.kingaku); else if(inR(d,R.prev)) o.p+=num(r.kingaku);
+    }
+    return Object.values(m).filter(o=>o.p||o.c);
+  }
+  /** EC: ecv = {rakuten:{fy:[{month,sheet}]},yahoo:{...}} */
+  function aggEC(ecv,fy,endIdx){
+    const out=[]; const names={rakuten:"楽天市場",yahoo:"ヤフーショッピング"};
+    for(const mall of Object.keys(ecv||{})){
+      const o={name:names[mall]||mall,ch:"EC",p:0,c:0,cov:"ok",last:null,months:{}};
+      for(const y of [fy-1,fy]){ for(const mo of (ecv[mall]&&ecv[mall][y])||[]){ const idx=fyIdx(+mo.month); if(idx>endIdx) continue;
+        const v=num(mo.sheet); if(y===fy) o.c+=v; else o.p+=v; o.months[y+"-"+mo.month]=v; } }
+      if(!(ecv[mall]&&ecv[mall][fy-1]&&ecv[mall][fy-1].length)) o.cov="none";
+      out.push(o);
+    }
+    return out;
+  }
+  function build(data,fy,endIdx){
+    const R=ranges(fy,endIdx);
+    const rows=[].concat(aggIchiba(data.ledger,R), aggNouhin(data.nouhin,R), aggEC(data.ec,fy,endIdx));
+    rows.forEach(o=>{ o.d=o.c-o.p; o.rate = o.p? o.c/o.p : null; });
+    const ch={}; for(const o of rows){ const c=ch[o.ch]=ch[o.ch]||{ch:o.ch,p:0,c:0,n:0,nP:0,nC:0,lost:0,neu:0}; c.p+=o.p; c.c+=o.c; c.n++; if(o.p) c.nP++; if(o.c) c.nC++; if(o.p&&!o.c) c.lost++; if(!o.p&&o.c) c.neu++; }
+    const tot={p:0,c:0}; Object.values(ch).forEach(c=>{tot.p+=c.p; tot.c+=c.c;});
+    return {R,rows,ch:Object.values(ch),tot};
+  }
+  return {fyOf,fyIdx,ranges,build,norm};
+})();
+if(typeof module!=="undefined") module.exports=YOY;
+</script>
+
+<script>
+/* ===== 設定 ===== */
+const KEIEI_URL="https://script.google.com/macros/s/AKfycbw4wRp48Y0B89JWbNB8nBOmybtvz4xztYWHoWTVlqX3mNFTZzdfPoaQHqvC5yQaIGxU/exec"; // 経営日報API（login＝認証＋精算台帳）
+const NOUHIN_URL="https://script.google.com/macros/s/AKfycbyE2O2zEk1NDYskaxflVtPReblSOyA5CyjfHTNXAYzK6tX1zgEzRypcFFSjtDy2SWa7wg/exec"; // 納品書DB
+const NOUHIN_KEY="nk-9t2Xr7Lq4wPz";
+const EC_URL="https://script.google.com/macros/s/AKfycbwxyn-27FkDO0glFdHwqiN6NiXG5vY0rZXOAfBMDMnh2aSBHO9KxqQRThOZb7W8hAT6/exec"; // order-desk（ec_verify）
+const CRED_KEY="uriageyoy_cred", CACHE_KEY="uriageyoy_cache_v1", END_KEY="uriageyoy_end";
+
+/* ===== 資格情報（共通SSO: h02050d-ship-it.github.io の他ツールのログインを引き継ぐ）===== */
+const SSO_KEY="hayazai_sso_cred";
+const SSO_PEERS=["hayazai_board_cred","hayazai_seiso_cred","hayazai_rulebook_cred","hayazai_kaizen_cred","notify_creds_v1","seinodesk_cred","faxdesk_cred","orderdesk_cred","nippou_cred","ryoshu_cred","hacchu_cred","shikin_cred"];
+function ssoFind_(){ for(const k of [SSO_KEY].concat(SSO_PEERS)){ try{ const v=JSON.parse(localStorage.getItem(k)||"null"); if(v){ const email=v.email||v.e, pass=v.pass||v.p; if(email&&pass) return {email:String(email),pass:String(pass)}; } }catch(e){} } return null; }
+function ssoWrite(email,pass){ try{ localStorage.setItem(SSO_KEY,JSON.stringify({email,pass})); }catch(e){} }
+function ssoClear(){ try{ localStorage.removeItem(SSO_KEY); }catch(e){} }
+function creds(){ try{ const v=JSON.parse(localStorage.getItem(CRED_KEY)||"null"); if(v&&v.email&&v.pass) return v; }catch(e){} const s=ssoFind_(); if(s){ try{ localStorage.setItem(CRED_KEY,JSON.stringify(s)); }catch(e){} return s; } return {}; }
+function saveCreds(email,pass){ try{ localStorage.setItem(CRED_KEY,JSON.stringify({email,pass})); }catch(e){} ssoWrite(email,pass); }
+function clearCreds(){ try{ localStorage.removeItem(CRED_KEY); localStorage.removeItem(CACHE_KEY); }catch(e){} ssoClear(); }
+
+/* ===== ユーティリティ ===== */
+const $=id=>document.getElementById(id);
+function esc(s){ return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+function man(n,dash){ const v=Math.round((n||0)/10000); if(!v&&dash) return "-"; return (v<0?"▲":"")+Math.abs(v).toLocaleString("ja-JP"); }
+function man1(n){ const v=Math.round((n||0)/1000)/10; return (v<0?"▲":"")+Math.abs(v).toLocaleString("ja-JP",{minimumFractionDigits:1,maximumFractionDigits:1}); }
+function pct(r){ return r==null? "-" : Math.round(r*100)+"%"; }
+function ymd(d){ return d? (d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()) : "-"; }
+let toastT=null; function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2600); }
+async function postJ(url,payload){ const r=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)}); return await r.json(); }
+async function getJ(url){ const r=await fetch(url); return await r.json(); }
+
+/* ===== 状態 ===== */
+let DATA=null;       // {ledger,nouhin,ec,fetchedAt}
+let RES=null;        // YOY.build の結果
+let FY=YOY.fyOf(new Date());
+let ENDIDX=null;     // 終了月の索引（既定=前月）
+let FILTER="all", CH="all", SORT={k:"d",asc:true}, Q="";
+
+function defaultEndIdx(){ const now=new Date(); const prevM=new Date(now.getFullYear(),now.getMonth(),0); const idx=YOY.fyIdx(prevM.getMonth()+1); return YOY.fyOf(prevM)<FY ? 0 : idx; }
+
+/* ===== 起動（前回データ即表示 → 裏で最新取得） ===== */
+function boot(){
+  const c=creds(); if(!(c.email&&c.pass)){ showGate(); return; }
+  $("gate").classList.remove("on"); $("app").style.display="";
+  const saved=+localStorage.getItem(END_KEY); ENDIDX = (saved>=0&&saved<=11&&localStorage.getItem(END_KEY)!==null) ? saved : defaultEndIdx();
+  buildEndSel();
+  let cache=null; try{ cache=JSON.parse(localStorage.getItem(CACHE_KEY)||"null"); }catch(e){}
+  if(cache&&cache.ledger){ DATA=cache; render(); $("meta").textContent="前回取得分を表示中（最新を取得しています…）"; }
+  fetchAll();
+}
+function showGate(err){ $("app").style.display="none"; $("gate").classList.add("on"); $("gErr").textContent=err||""; setTimeout(()=>$("gMail").focus(),50); }
+$("gBtn").onclick=async()=>{
+  const email=$("gMail").value.trim().toLowerCase(), pass=$("gPass").value;
+  if(!email||!pass){ $("gErr").textContent="メールとパスワードを入力してください"; return; }
+  $("gErr").textContent="確認中…";
+  try{ const d=await postJ(KEIEI_URL,{action:"login",email,pass});
+    if(d&&d.ok){ saveCreds(email,pass); $("gErr").textContent=""; boot(); }
+    else if(d&&d.error==="auth") $("gErr").textContent="メールまたはパスワードが違います";
+    else $("gErr").textContent="エラー: "+(d&&d.error||"不明");
+  }catch(e){ $("gErr").textContent="接続エラー。通信環境を確認してください"; }
+};
+["gMail","gPass"].forEach(id=>$(id).addEventListener("keydown",e=>{ if(e.key==="Enter") $("gBtn").click(); }));
+$("logoutBtn").onclick=()=>{ clearCreds(); location.reload(); };
+$("reloadBtn").onclick=()=>fetchAll();
+
+async function fetchAll(){
+  const c=creds(); if(!c.email) return;
+  $("meta").textContent="最新を取得しています…";
+  try{
+    const [login,nouhin,r1,r0,y1,y0]=await Promise.all([
+      postJ(KEIEI_URL,{action:"login",email:c.email,pass:c.pass}),
+      getJ(NOUHIN_URL+"?action=getRecords&k="+NOUHIN_KEY),
+      getJ(EC_URL+"?action=ec_verify&mall=rakuten&fy="+FY+"&email="+encodeURIComponent(c.email)+"&pass="+encodeURIComponent(c.pass)),
+      getJ(EC_URL+"?action=ec_verify&mall=rakuten&fy="+(FY-1)+"&email="+encodeURIComponent(c.email)+"&pass="+encodeURIComponent(c.pass)),
+      getJ(EC_URL+"?action=ec_verify&mall=yahoo&fy="+FY+"&email="+encodeURIComponent(c.email)+"&pass="+encodeURIComponent(c.pass)),
+      getJ(EC_URL+"?action=ec_verify&mall=yahoo&fy="+(FY-1)+"&email="+encodeURIComponent(c.email)+"&pass="+encodeURIComponent(c.pass)),
+    ]);
+    if(!(login&&login.ok)){ if(login&&login.error==="auth"){ clearCreds(); showGate("ログインの有効期限が切れました。もう一度ログインしてください"); } else { $("meta").textContent="取得エラー: "+(login&&login.error||"不明"); } return; }
+    const rows=Array.isArray(nouhin)?nouhin:(nouhin.rows||nouhin.records||nouhin.data||[]);
+    const slim=rows.map(r=>({date:r.date,customer:r.customer,method:r.method,kingaku:r.kingaku}));
+    DATA={ledger:login.ichiba||[], nouhin:slim, ec:{rakuten:{[FY]:(r1.months||[]),[FY-1]:(r0.months||[])}, yahoo:{[FY]:(y1.months||[]),[FY-1]:(y0.months||[])}}, fetchedAt:Date.now()};
+    try{ localStorage.setItem(CACHE_KEY,JSON.stringify(DATA)); }catch(e){}
+    render(); toast("最新を取得しました");
+  }catch(e){ console.error(e); $("meta").textContent=(DATA?"通信エラー・前回データを表示中":"取得エラー。再読込してください"); }
+}
+
+/* ===== 描画 ===== */
+function buildEndSel(){
+  const s=$("endSel"); s.innerHTML="";
+  for(let i=0;i<12;i++){ const m=i+4>12?i-8:i+4; const o=document.createElement("option"); o.value=i; o.textContent=m+"月まで"; s.appendChild(o); }
+  s.value=ENDIDX;
+  s.onchange=()=>{ ENDIDX=+s.value; localStorage.setItem(END_KEY,ENDIDX); render(); };
+}
+function render(){
+  if(!DATA) return;
+  RES=YOY.build(DATA,FY,ENDIDX);
+  const R=RES.R; const endM=R.endM;
+  $("period").textContent=FY+"年度 4月〜"+endM+"月 vs 前年同期";
+  const t=DATA.fetchedAt?new Date(DATA.fetchedAt):null;
+  $("meta").textContent="データ取得: "+(t?t.toLocaleString("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}):"-")+" ／ 今期 "+ymd(R.cur[0])+"〜"+ymd(R.cur[1])+" ／ 前期 "+ymd(R.prev[0])+"〜"+ymd(R.prev[1]);
+  renderKpis(); renderCh(); renderChips(); renderTable(); renderNotes();
+}
+function cls(n){ return n<0?"neg":(n>0?"pos":""); }
+function renderKpis(){
+  const T=RES.tot; const d=T.c-T.p; const chs={}; RES.ch.forEach(c=>chs[c.ch]=c);
+  const k=[{l:"合計（3系統の合算）",v:man(T.c)+"万",s:"前期 "+man(T.p)+"万 → 差 <b class='"+cls(d)+"'>"+man(d)+"万</b>（"+pct(T.p?T.c/T.p:null)+"）"}];
+  for(const name of ["市売","付売","EC","HP直販"]){ const c=chs[name]; if(!c) continue; const dd=c.c-c.p; k.push({l:name,v:man(c.c)+"万",s:"前期 "+man(c.p)+"万 → 差 <b class='"+cls(dd)+"'>"+man(dd)+"万</b>（"+pct(c.p?c.c/c.p:null)+"）"}); }
+  $("kpis").innerHTML=k.map(x=>"<div class='kpi'><div class='l'>"+esc(x.l)+"</div><div class='v'>"+x.v+"</div><div class='s'>"+x.s+"</div></div>").join("");
+}
+function renderCh(){
+  const T=RES.tot; const dT=T.c-T.p;
+  const order=["市売","付売","EC","HP直販"]; const rows=RES.ch.slice().sort((a,b)=>order.indexOf(a.ch)-order.indexOf(b.ch));
+  let h="<tr><th>チャネル</th><th class='r'>前期</th><th class='r'>今期</th><th class='r'>差</th><th class='r'>前年比</th><th class='r'>全体の差への寄与</th><th class='r'>取引先数（前期→今期）</th><th class='r'>消えた</th><th class='r'>新規</th></tr>";
+  for(const c of rows){ const d=c.c-c.p; h+="<tr><td>"+tag(c.ch)+"</td><td class='r'>"+man(c.p)+"</td><td class='r'>"+man(c.c)+"</td><td class='r "+cls(d)+"'>"+man(d)+"</td><td class='r'>"+pct(c.p?c.c/c.p:null)+"</td><td class='r'>"+(dT?Math.round(d/dT*100)+"%":"-")+"</td><td class='r'>"+c.nP+" → "+c.nC+"</td><td class='r'>"+c.lost+"</td><td class='r'>"+c.neu+"</td></tr>"; }
+  h+="<tr class='tot'><td>合計</td><td class='r'>"+man(T.p)+"</td><td class='r'>"+man(T.c)+"</td><td class='r "+cls(dT)+"'>"+man(dT)+"</td><td class='r'>"+pct(T.p?T.c/T.p:null)+"</td><td class='r'>100%</td><td colspan='3'></td></tr>";
+  $("chTable").innerHTML=h;
+}
+function tag(ch){ const m={"市売":"t-ichi","付売":"t-tsuke","EC":"t-ec","HP直販":"t-hp"}; return "<span class='tag "+(m[ch]||"")+"'>"+esc(ch)+"</span>"; }
+function renderChips(){
+  const defs=[["all","すべて"],["down","減った先"],["up","増えた先"],["lost","消えた先（前期あり→今期ゼロ）"],["new","新規（前期ゼロ→今期あり）"]];
+  const chs=[["all","全チャネル"],["市売","市売"],["付売","付売"],["EC","EC"],["HP直販","HP直販"]];
+  $("chips").innerHTML=defs.map(([k,l])=>"<button class='chip"+(FILTER===k?" on":"")+"' data-f='"+k+"'>"+l+"</button>").join("")+"<span style='width:14px'></span>"+chs.map(([k,l])=>"<button class='chip"+(CH===k?" on":"")+"' data-c='"+k+"'>"+l+"</button>").join("");
+  $("chips").querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{FILTER=b.dataset.f; renderChips(); renderTable();});
+  $("chips").querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{CH=b.dataset.c; renderChips(); renderTable();});
+}
+function renderTable(){
+  const T=RES.tot; const dT=T.c-T.p; const q=Q.trim();
+  let rows=RES.rows.filter(o=>{
+    if(CH!=="all"&&o.ch!==CH) return false;
+    if(q&&o.name.indexOf(q)<0) return false;
+    if(FILTER==="down") return o.d<0; if(FILTER==="up") return o.d>0; if(FILTER==="lost") return o.p&&!o.c; if(FILTER==="new") return !o.p&&o.c;
+    return true;
+  });
+  rows.sort((a,b)=>{ const k=SORT.k; let va=a[k],vb=b[k]; if(k==="name"||k==="ch"){ va=String(va);vb=String(vb); return SORT.asc?va.localeCompare(vb,"ja"):vb.localeCompare(va,"ja"); } if(k==="last"){ va=va?va.getTime():0; vb=vb?vb.getTime():0; } if(va==null) va=-Infinity; if(vb==null) vb=-Infinity; return SORT.asc?va-vb:vb-va; });
+  const maxAbs=Math.max(1,...rows.map(o=>Math.abs(o.d)));
+  const th=(k,l,r)=>"<th class='"+(r?"r":"")+"' data-k='"+k+"'>"+l+(SORT.k===k?(SORT.asc?" ▲":" ▼"):"")+"</th>";
+  let h="<tr>"+th("name","取引先")+th("ch","区分")+th("p","前期",1)+th("c","今期",1)+th("d","差",1)+"<th></th>"+th("rate","前年比",1)+"<th class='r'>全体の差への寄与</th>"+th("last","最終取引",1)+"<th>前期データ</th></tr>";
+  let sp=0,sc=0;
+  for(const o of rows){ sp+=o.p; sc+=o.c;
+    const w=Math.round(Math.abs(o.d)/maxAbs*90); const bar="<span class='bar' style='width:"+w+"px;background:"+(o.d<0?"#fca5a5":"#86efac")+"'></span>";
+    const cov=o.cov==="ok"?"":(o.cov==="part"?"<span class='tag t-warn'>前期一部のみ</span>":"<span class='tag t-red'>前期データなし</span>");
+    const st=(o.p&&!o.c)?" <span class='tag t-red'>消えた</span>":((!o.p&&o.c)?" <span class='tag t-green'>新規</span>":"");
+    h+="<tr><td>"+esc(o.name)+st+"</td><td>"+tag(o.ch)+"</td><td class='r'>"+man(o.p,1)+"</td><td class='r'>"+man(o.c,1)+"</td><td class='r "+cls(o.d)+"' title='"+man1(o.d)+"万'>"+man(o.d)+"</td><td>"+bar+"</td><td class='r'>"+pct(o.rate)+"</td><td class='r'>"+(dT?Math.round(o.d/dT*100)+"%":"-")+"</td><td class='r'>"+ymd(o.last)+"</td><td>"+cov+"</td></tr>";
+  }
+  h+="<tr class='tot'><td colspan='2'>表示分の合計（"+rows.length+"件）</td><td class='r'>"+man(sp)+"</td><td class='r'>"+man(sc)+"</td><td class='r "+cls(sc-sp)+"'>"+man(sc-sp)+"</td><td></td><td class='r'>"+pct(sp?sc/sp:null)+"</td><td class='r'>"+(dT?Math.round((sc-sp)/dT*100)+"%":"-")+"</td><td colspan='2'></td></tr>";
+  $("tbl").innerHTML=h;
+  $("tbl").querySelectorAll("th[data-k]").forEach(t=>t.onclick=()=>{ const k=t.dataset.k; if(SORT.k===k) SORT.asc=!SORT.asc; else { SORT.k=k; SORT.asc=(k==="d"||k==="name"||k==="ch"); } renderTable(); });
+  $("listSub").textContent="単位：万円。差の小さい順（減少が大きい先が上）。列名クリックで並べ替え。";
+}
+$("q").oninput=e=>{ Q=e.target.value; renderTable(); };
+function renderNotes(){
+  const R=RES.R; const ich=RES.rows.filter(o=>o.ch==="市売"); const noCov=ich.filter(o=>o.cov!=="ok").map(o=>o.name);
+  const yo=RES.rows.find(o=>o.name==="ヤフーショッピング");
+  const lines=[
+    "<b>市売</b>は市場別精算台帳（精算書の税抜売上）です。精算書の取り込みは市場によって開始時期が違うため、前期の途中から記録が始まっている市場は「前期一部のみ」「前期データなし」と表示しています"+(noCov.length?"（該当: "+esc(noCov.join("・"))+"）":"")+"。その市場の前年比は実態より良く見えます。",
+    "<b>付売・HP直販</b>は納品書DB（出荷日ベース・税抜）です。会計の売上（入金時計上）とは月がずれます。",
+    "<b>EC</b>は楽天・ヤフーの売上集計表の月合計（受注ベース・クーポン調整後）です。"+(yo&&yo.p===0?"ヤフーの前期はまだ集計表に入っていません。":""),
+    "<b>会計の売上高と合計は一致しません</b>。会計は入金ベースで、税理士の月次計上と戻入が入ります。全社の前年比は決算書（貸借対照表・損益計算書）を正としてください。このツールは「どの取引先で増減したか」を見るためのものです。",
+    "終了月は右上で変えられます。当月は締まっていないので、既定は前月までです。"
+  ];
+  $("notes").innerHTML="<ul style='margin:0;padding-left:18px'>"+lines.map(l=>"<li>"+l+"</li>").join("")+"</ul>";
+}
+boot();
+</script>
+</body>
+</html>
