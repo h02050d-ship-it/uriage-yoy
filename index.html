@@ -204,7 +204,7 @@ if(typeof module!=="undefined") module.exports=YOY;
 /* ===== 設定 ===== */
 const KEIEI_URL="https://script.google.com/macros/s/AKfycbw4wRp48Y0B89JWbNB8nBOmybtvz4xztYWHoWTVlqX3mNFTZzdfPoaQHqvC5yQaIGxU/exec"; // 経営日報API（login＝認証＋精算台帳）
 const NOUHIN_URL="https://script.google.com/macros/s/AKfycbyE2O2zEk1NDYskaxflVtPReblSOyA5CyjfHTNXAYzK6tX1zgEzRypcFFSjtDy2SWa7wg/exec"; // 納品書DB
-const NOUHIN_KEY="nk-9t2Xr7Lq4wPz";
+// 納品書DBの読取はログイン中のSSOパスで通す（2026-09-09 合言葉の直書きを廃止）
 const EC_URL="https://script.google.com/macros/s/AKfycbwxyn-27FkDO0glFdHwqiN6NiXG5vY0rZXOAfBMDMnh2aSBHO9KxqQRThOZb7W8hAT6/exec"; // order-desk（ec_verify）
 const CRED_KEY="uriageyoy_cred", CACHE_KEY="uriageyoy_cache_v1", END_KEY="uriageyoy_end";
 
@@ -276,7 +276,7 @@ async function fetchAll(){
   try{
     const [login,nouhin,r1,r0,y1,y0]=await Promise.all([
       postJ(KEIEI_URL,{action:"login",email:c.email,pass:c.pass}),
-      getJ(NOUHIN_URL+"?action=getRecords&k="+NOUHIN_KEY),
+      getJ(NOUHIN_URL+"?action=getRecords&pass="+encodeURIComponent((creds()||{}).pass||"")),
       getJ(EC_URL+"?action=ec_verify&mall=rakuten&fy="+FY+"&email="+encodeURIComponent(c.email)+"&pass="+encodeURIComponent(c.pass)),
       getJ(EC_URL+"?action=ec_verify&mall=rakuten&fy="+(FY-1)+"&email="+encodeURIComponent(c.email)+"&pass="+encodeURIComponent(c.pass)),
       getJ(EC_URL+"?action=ec_verify&mall=yahoo&fy="+FY+"&email="+encodeURIComponent(c.email)+"&pass="+encodeURIComponent(c.pass)),
